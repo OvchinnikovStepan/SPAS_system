@@ -1,29 +1,20 @@
 import numpy as np
 import pandas as pd
 
-from spa_models_lib.src.anomalies_detection.base import UnivariateModels
 
-
-class OutliersDetector(UnivariateModels):
-    """
-    Класс для обнаружения одномерных аномалий.
-    """
-
-    MODEL_TYPE = 'UNIVARIATE_ANOMALY'
-
-    def __init__(
-        self,
+def outlier_detector(
+        series: pd.Series,
+        statistic: pd.Series = None,
+        last_point: pd.Timestamp = None,
         outlier_sensity: str = 'medium',
         hi_percent: float = 0.95,
         low_percent: float = 0.05,
-        bound_coef: int = 5,
+        bound_coef: int = None,
         statistic_len: int = 144,
-        statistic_len_for_mean: int = 12,
-        *args,
-        **kwargs
-    ):
+        statistic_len_for_mean: int = 12
+        ):
         """
-        Инициализация класса обнаружения выбросов.
+        Аргументы функции обнаружения выбросов.
 
         Аргументы:
         outlier_sensity (str): параметр чувствительности;
@@ -33,37 +24,21 @@ class OutliersDetector(UnivariateModels):
         statistic_len (int): длина записи статистики (из идеи 1 расчет в 10 минут);
         statistic_len_for_mean (int): длина статистики для расчета среднего значения.
         """
+        if bound_coef:
+            pass
+        elif outlier_sensity == 'low':
+            bound_coef = 10
+        elif outlier_sensity == 'medium':
+            bound_coef = 7
+        elif outlier_sensity == 'high':
+            bound_coef = 5
+        else:
+            bound_coef = 7
 
-        self.outlier_sensity = (
-            'medium' if outlier_sensity is None else outlier_sensity
-        )
-        self.bound_coef = bound_coef if bound_coef is None else bound_coef
-        if self.outlier_sensity == 'low':
-            self.bound_coef = 10
-        elif self.outlier_sensity == 'medium':
-            self.bound_coef = 7
-        elif self.outlier_sensity == 'high':
-            self.bound_coef = 5
-
-        self.hi_percent = hi_percent
-        self.low_percent = low_percent
-        self.statistic_len = statistic_len
-        self.statistic_len_for_mean = statistic_len_for_mean
-
-    def predict(
-        self,
-        series: pd.Series,
-        statistic: pd.Series = None,
-        last_point: pd.Timestamp = None,
-    ):
-        """
-        Метод для обнаружения выбросов.
-
-        Аргументы:
-        series (pd.Series): входные данные для расчета выбросов;
-        statistic (pd.Series): история значений для расчета статистики;
-        last_point (pd.Timestamp): предыдущая последняя точка, которая была в расчете.
-        """
+        hi_percent = hi_percent
+        low_percent = low_percent
+        statistic_len = statistic_len
+        statistic_len_for_mean = statistic_len_for_mean
 
         series = series.groupby(series.index).last()
         if statistic is None or statistic.empty:
@@ -71,60 +46,61 @@ class OutliersDetector(UnivariateModels):
             last_point = series.index[-2]
 
         normalized_series = statistic[
-            (statistic <= statistic.quantile(self.hi_percent))
-            * (statistic >= statistic.quantile(self.low_percent))
+            (statistic <= statistic.quantile(hi_percent))
+            * (statistic >= statistic.quantile(low_percent))
         ]
         if len(normalized_series) < 2:
             normalized_series = statistic
-        week_std = normalized_series.std()
-        mean = np.mean(normalized_series.iloc[-self.statistic_len_for_mean :])
 
-        hi_bound = mean + self.bound_coef * week_std
-        low_bound = mean - self.bound_coef * week_std
+        def detection_step(
+            series: pd.Series,
+            statistic: pd.Series = None,
+            last_point: pd.Timestamp = None):
 
-        points_to_check = series.loc[last_point:].iloc[:-1]
-        prev_diff = (points_to_check - series.shift(1)).dropna()
-        next_diff = (series.shift(-1) - points_to_check).dropna()
+            statistic_std = normalized_series.std()
+            mean = np.mean(normalized_series.iloc[-statistic_len_for_mean :])
 
-        outlier_status = points_to_check[
-            prev_diff[
-                ((prev_diff).abs() > self.bound_coef * week_std)
-                & ((prev_diff) * (next_diff) < 0)
-                & (
-                    (points_to_check >= hi_bound)
-                    + (points_to_check <= low_bound)
-                )
-            ].index
-        ]
-        if outlier_status.any():
-            self.anomaly_status = 1
+            hi_bound = mean + bound_coef * statistic_std
+            low_bound = mean - bound_coef * statistic_std
+
+            points_to_check = series.loc[last_point:].iloc[:-1]
+            prev_diff = (points_to_check - series.shift(1)).dropna()
+            next_diff = (series.shift(-1) - points_to_check).dropna()
+
+            checked_points = points_to_check[
+                prev_diff[
+                    ((prev_diff).abs() > bound_coef * statistic_std)
+                    & ((prev_diff) * (next_diff) < 0)
+                    & (
+                        (points_to_check >= hi_bound)
+                        + (points_to_check <= low_bound)
+                    )
+                ].index
+            ]
+            if not (statistic is None or statistic.empty):
+                new_points = points_to_check.copy()
+                new_points.drop_duplicates(inplace=True)
+                try:
+                    if statistic[-1] == new_points[0]:
+                        new_points.drop(new_points.index[0], inplace=True)
+                except IndexError:
+                    pass
+                statistic = pd.concat([statistic, new_points])
+                statistic = statistic.iloc[-statistic_len :]
+            last_point = series.index[-1]
+
+            statistic = statistic.groupby(statistic.index).last()
+
+            return checked_points,statistic,last_point
+
+        checked_points=pd.DataFrame()
+
+        while len(series)<=99:
+            checked_points_on_step,statistic,last_point=detection_step(series=series[:100],statistic=statistic,last_point=last_point)
+            checked_points=pd.concat(checked_points,checked_points_on_step)
+            series=series[100:]
         else:
-            self.anomaly_status = 0
-        if not (statistic is None or statistic.empty):
-            # new_points = points_to_check.drop(
-            #     index=outlier_status.index, errors='ignore'
-            # )
-            new_points = points_to_check.copy()
-            new_points.drop_duplicates(inplace=True)
-            try:
-                if statistic[-1] == new_points[0]:
-                    new_points.drop(new_points.index[0], inplace=True)
-            except IndexError:
-                pass
-            statistic = pd.concat([statistic, new_points])
-            statistic = statistic.iloc[-self.statistic_len :]
-        last_point = series.index[-1]
+            checked_points_on_step,_,_=detection_step(series=series,statistic=statistic,last_point=last_point)
+            checked_points=pd.concat(checked_points,checked_points_on_step)
 
-        statistic = statistic.groupby(statistic.index).last()
-
-        return self.anomaly_status, statistic, last_point
-
-    def fit(self):
-        pass
-
-    def fit_predict(self):
-        pass
-
-    @classmethod
-    def spas_name(cls):
-        return 'outlier'
+        return checked_points
