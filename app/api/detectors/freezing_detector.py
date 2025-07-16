@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from math import isclose
-from spa_models_lib.src.anomalies_detection.base import UnivariateModels
 
 
 class FreezingDetector(UnivariateModels):
