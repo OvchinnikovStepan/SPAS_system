@@ -2,61 +2,47 @@ import numpy as np
 import pandas as pd
 from math import isclose
 
-
-class FreezingDetector(UnivariateModels):
+def freezing_detector(
+    series: pd.Series,
+    freezing_count: int = 5,
+    rel_tol: float = 1e-9,
+) -> pd.Series:
     """
-    Класс для обнаружения замораживания (залипания) одномерных аномалий.
+    Обнаруживает все точки в участках "заморозки" значений.
+    
+    Параметры:
+        series: Входной временной ряд
+        freezing_count: Минимальное количество подряд идущих близких значений
+        rel_tol: Относительный допуск для сравнения значений
+        min_consecutive: Минимальная длина участка для включения в результат (если None, равен freezing_count)
+    
+    Возвращает:
+        pd.Series с ВСЕМИ точками в обнаруженных участках заморозки
     """
-
-    MODEL_TYPE = 'UNIVARIATE_ANOMALY'
-
-    def __init__(self, freezing_count: int = 5, rel_tol: float = 1e-9, *args, **kwargs):
-        """
-        Метод с инициализацией количества последних изменений, которые должны быть одинаковыми для определения замораживания (залипания).
-
-        Аргументы:
-        freezing_count (int): число замораживания (залипания);
-        *args, **kwargs: дополнительные аргументы.
-        """
-        self.freezing_count = 5 if freezing_count is None else freezing_count
-        self.rel_tol = rel_tol
-
-    def predict(self, series: pd.Series):
-        """
-        Метод, реализующий прогнозирование на основе обученной модели.
-
-        Алгоритм:
-        1. сортировка временного ряда по индексу;
-        2. проверка условия равенства средних значений последних freezing_count значений последней точке из этого периода:
-            2.1 если условие выполняется, то аномалия;
-            2.1 если условие не выполняется, то нет аномалии.
+    if len(series) < freezing_count:
+        return pd.Series(dtype=float)
+    
+    series = series.sort_index().copy()
+    frozen_mask = pd.Series(False, index=series.index)
+    
+    i = 0
+    n = len(series)
+    
+    while i <= n - freezing_count:
+        window = series.iloc[i:i+freezing_count]
+        mean_val = window.mean()
         
-        Аргументы:
-        series (pd.Series): временной ряд для предсказания.
-
-        Возврат:
-        anomaly_status (int): статус аномалии.
-        """
-
-        series.sort_index(inplace=True)
-
-        if (
-            np.all(series[-self.freezing_count - 1 :].map(lambda x: isclose(series[-self.freezing_count - 1 :].mean(), x, rel_tol=self.rel_tol)))
-            and len(series) >= self.freezing_count
-        ):
-            self.anomaly_status = 1
+        # Проверяем, является ли текущее окно замороженным
+        if all(isclose(x, mean_val, rel_tol=rel_tol) for x in window):
+            end = i + freezing_count - 1
+            
+            # Расширяем вправо
+            while end < n - 1 and isclose(series.iloc[end+1], mean_val, rel_tol=rel_tol):
+                end += 1
+                
+            frozen_mask.iloc[i:end+1] = True
+            i = end + 1  # Перескакиваем за пределы найденного участка
         else:
-            self.anomaly_status = 0
-
-        return self.anomaly_status   # AnomaliesOutputs(**self.__dict__)
-
-    def fit(self):
-        pass
-
-    def fit_predict(self):
-        pass
-
-    # для СПАС
-    @classmethod
-    def spas_name(cls):
-        return 'stick'
+            i += 1
+    
+    return series[frozen_mask]
