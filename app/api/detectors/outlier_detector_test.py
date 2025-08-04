@@ -20,7 +20,7 @@ series = pd.Series(values, index=dates)
 print("Запуск детектора выбросов...")
 outliers = outlier_detector(
     series=series,
-    outlier_sensity='None',  # Можно менять на 'low'/'high'
+    sensity='None',  # Можно менять на 'low'/'high'
     bound_coef=3,
     statistic_len=144,
     statistic_len_for_mean=12
