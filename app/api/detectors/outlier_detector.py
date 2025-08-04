@@ -49,9 +49,10 @@ def outlier_detector(
         
             if len(normalized_series) < 2:
                 normalized_series = statistic
-                statistic_std = normalized_series.std()
-                mean = np.mean(normalized_series.iloc[-statistic_len_for_mean:])
-
+                
+            statistic_std = normalized_series.std()
+            mean = np.mean(normalized_series.iloc[-statistic_len_for_mean:])
+            
             hi_bound = mean + bound_coef * statistic_std
             low_bound = mean - bound_coef * statistic_std
 
