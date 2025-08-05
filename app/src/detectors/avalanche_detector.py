@@ -82,7 +82,7 @@ def avalanch_detector(
                 new_points = points_to_check.copy()
                 new_points.drop_duplicates(inplace=True)
                 try:
-                    if statistic.iloc[-1] == new_points[0]:
+                    if statistic.iloc[-1] == new_points.iloc[0]:
                         new_points.drop(new_points.index[0], inplace=True)
                 except IndexError:
                     pass
@@ -100,12 +100,20 @@ def avalanch_detector(
             checked_points_on_step, statistic, last_point = detection_step(
                 series=series[:100], statistic=statistic, last_point=last_point
             )
-            checked_points = pd.concat([checked_points, checked_points_on_step])
+            if not checked_points_on_step.empty:
+                if checked_points.empty:
+                    checked_points = checked_points_on_step
+                else:
+                    checked_points = pd.concat([checked_points, checked_points_on_step])
             series = series[99:]
         else:
             checked_points_on_step, _, _ = detection_step(
                 series=series, statistic=statistic, last_point=last_point
             )
-            checked_points = pd.concat([checked_points, checked_points_on_step])
+            if not checked_points_on_step.empty:
+                if checked_points.empty:
+                    checked_points = checked_points_on_step
+                else:
+                    checked_points = pd.concat([checked_points, checked_points_on_step])
 
         return checked_points

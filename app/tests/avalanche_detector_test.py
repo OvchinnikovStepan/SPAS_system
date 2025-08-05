@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
-from avalanche_detector import avalanch_detector
+from app.src.detectors.avalanche_detector import avalanch_detector
 def test_avalanch_detector():
     # 1. Создаем тестовые данные
     np.random.seed(42)
