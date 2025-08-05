@@ -11,6 +11,7 @@ DETECTORS = {
     "outlier": "detectors.outlier_detector.outlier_detector"
 }
 
+
 def routing_func(models: Dict[str, Dict[str, Any]]) -> Dict[str, Union[pd.Series, pd.DataFrame]]:
     """
     Маршрутизирует вызовы к различным детекторам аномалий.
