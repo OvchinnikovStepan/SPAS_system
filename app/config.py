@@ -1,15 +1,42 @@
 #Список всех детекторов доступных для использования
 
 DETECTORS = {
-    "avalanche": "app.src.detectors.avalanche_detector.avalanche_detector",
-    "freezing": "app.src.detectors.freezing_detector.freezing_detector",
-    "outlier": "app.src.detectors.outlier_detector.outlier_detector"
+    "avalanche": {
+        "path": "app.src.detectors.avalanche_detector.avalanche_detector",
+        "description": "Анализ лавинной скорости",
+        "params": {
+            "statistic": "pd.Series",
+            "last_point": "pd.Timestamp",
+            "sensity": "str",
+            "bound_coef": "int",
+            "hi_percent": "float",
+            "low_percent": "float",
+            "statistic_len": "int",
+            "statistic_len_for_mean": "int"
+        }
+    },
+    "freezing": {
+        "path": "app.src.detectors.freezing_detector.freezing_detector",
+        "description": "Анализ залипаний",
+        "params": {
+            "freezing_count": "int",
+            "rel_tol": "float",
+        }
+    },
+    "outlier": {
+        "path": "app.src.detectors.outlier_detector.outlier_detector",
+        "description": "Анализ выбросов",
+        "params": {
+            "statistic": "pd.Series",
+            "last_point": "pd.Timestamp",
+            "sensity": "str",
+            "bound_coef": "int",
+            "hi_percent": "float",
+            "low_percent": "float",
+            "statistic_len": "int",
+            "statistic_len_for_mean": "int"
+        }
+    }
 }
 
-#Описание каждого детектора
 
-DETECTORS_DESCRIPTION = {
-    "avalanche": "Анализ лавинной скорости",
-    "freezing": "Анализ залипаний",
-    "outlier": "Анализ выбросов"
-}

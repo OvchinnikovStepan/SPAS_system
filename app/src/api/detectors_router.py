@@ -16,8 +16,8 @@ def check_detectors_config() -> Dict[str, Any]:
 
     try:
         # Попытка импорта
-        from app.config import DETECTORS, DETECTORS_DESCRIPTION
-        logger.info("✅ Файлы конфигурации успешно импортированы")
+        from app.config import DETECTORS
+        logger.info("✅ Файл конфигурации успешно импортирован")
 
     except ImportError as e:
         logger.error(f"❌ Не удалось импортировать конфигурацию: {e}")
@@ -28,54 +28,18 @@ def check_detectors_config() -> Dict[str, Any]:
         logger.error(f"❌ DETECTORS должен быть dict, получено {type(DETECTORS)}")
         raise TypeError("Некорректный тип DETECTORS - должен быть словарем")
 
-    if not isinstance(DETECTORS_DESCRIPTION, dict):
-        logger.error(f"❌ DETECTORS_DESCRIPTION должен быть dict, получено {type(DETECTORS_DESCRIPTION)}")
-        raise TypeError("Некорректный тип DETECTORS_DESCRIPTION - должен быть словарем")
-
     # Проверка на пустоту
     if len(DETECTORS) == 0:
         logger.warning("⚠️ Словарь DETECTORS пуст")
         raise ValueError("Словарь доступных детекторов пуст")
 
-    if len(DETECTORS_DESCRIPTION) == 0:
-        logger.warning("⚠️ Словарь DETECTORS_DESCRIPTION пуст")
-        raise ValueError("Словарь описаний детекторов пуст")
-
-    # Проверка соответствия ключей
-    detectors_keys = set(DETECTORS.keys())
-    descriptions_keys = set(DETECTORS_DESCRIPTION.keys())
-
-    if detectors_keys != descriptions_keys:
-        missing_in_descriptions = detectors_keys - descriptions_keys
-        missing_in_detectors = descriptions_keys - detectors_keys
-
-        error_msg = "Несоответствие ключей между DETECTORS и DETECTORS_DESCRIPTION: "
-        if missing_in_descriptions:
-            error_msg += f"Отсутствуют описания для: {list(missing_in_descriptions)}. "
-        if missing_in_detectors:
-            error_msg += f"Отсутствуют детекторы для: {list(missing_in_detectors)}."
-
-        logger.error(f"❌ {error_msg}")
-        raise ValueError(error_msg)
-
-    # Проверка содержимого DETECTORS
-    for name, config in DETECTORS.items():
-        if not isinstance(config, str) or not config.strip():
-            logger.error(f"❌ Некорректная конфигурация для детектора '{name}': {config}")
-            raise ValueError(f"Некорректная конфигурация детектора '{name}' - должен быть непустой строкой")
-
-    # Проверка содержимого DETECTORS_DESCRIPTION
-    for name, description in DETECTORS_DESCRIPTION.items():
-        if not isinstance(description, str) or not description.strip():
-            logger.error(f"❌ Некорректное описание для детектора '{name}': {description}")
-            raise ValueError(f"Некорректное описание детектора '{name}' - должно быть непустой строкой")
 
     logger.info(f"📊 Найдено {len(DETECTORS)} детекторов:")
-    for name, config in DETECTORS.items():
-        logger.info(f"  • {name}: {config}")
-        logger.info(f"      Описание: {DETECTORS_DESCRIPTION[name]}")
+    for name in DETECTORS.keys():
+        logger.info(f"  • {name}: {DETECTORS[name]["path"]}")
+        logger.info(f"      Описание: {DETECTORS[name]["description"]}")
 
-    return DETECTORS_DESCRIPTION
+    return DETECTORS
 
 
 @router.get("",
@@ -84,7 +48,7 @@ def check_detectors_config() -> Dict[str, Any]:
             description="Получение списка всех детекторов",
             response_description="Список всех детекторов с их описанием",
             )
-async def get_detectors() -> Dict[str, str]:
+async def get_detectors() -> Dict[str, Any]:
     """
         Возвращает список названий всех доступных детекторов.
     """
