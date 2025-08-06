@@ -13,7 +13,7 @@ def validate_basic_functionality():
     # Создаем тестовые данные
     test_series = pd.Series(
         np.random.normal(0, 1, 100),
-        index=pd.date_range(start="2023-01-01", periods=100, freq="1H")
+        index=pd.date_range(start="2023-01-01", periods=100, freq="1h")
     )
 
     from app.config import DETECTORS
@@ -41,11 +41,12 @@ def validate_basic_functionality():
                 raise ValueError(f"Детектор '{detector_name}' вернул None")
 
             logger.info(f"✅ Базовый тест детектора '{detector_name}' пройден")
-            return True
 
         except Exception as e:
             logger.warning(f"⚠️  Базовый тест детектора '{detector_name}' не пройден: {e}")
             # Не прерываем запуск, но логируем предупреждение
+
+    return True
 
 
 def get_default_params(detector_name):

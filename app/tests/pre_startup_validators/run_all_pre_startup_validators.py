@@ -17,7 +17,8 @@ def run_pre_startup_validations():
         if validate_dependencies() and \
                 validate_detector_imports() and \
                 validate_detector_modules() and \
-                validate_detector_functions():
+                validate_detector_functions() and \
+                validate_basic_functionality():
             logger.info("✅ Все предстартовые проверки пройдены успешно")
             return True
         else:

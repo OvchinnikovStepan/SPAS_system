@@ -1,19 +1,38 @@
 from fastapi import FastAPI
 import logging
+import coloredlogs
+import uvicorn
+from contextlib import asynccontextmanager
 from app.src.middleware import add_middlewares
+from app.settings import settings
 from app.src.api.detectors_router import router as detectors_router
 from app.tests.pre_startup_validators.run_all_pre_startup_validators import run_pre_startup_validations
 
-logging.basicConfig(level=logging.INFO)
+
+coloredlogs.install(
+    level='INFO',
+    fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    field_styles={
+        'asctime': {'color': 'green'},
+        'name': {'color': 'blue'},
+        'levelname': {'color': 'yellow', 'bold': True}
+    },
+    level_styles={
+        'debug': {'color': 'white'},
+        'info': {'color': 'blue'},
+        'warning': {'color': 'yellow'},
+        'error': {'color': 'red'},
+        'critical': {'color': 'red', 'bold': True}
+    }
+)
+
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="SPAS System API")
 
 
-# Запуск проверок перед стартом
-@app.on_event("startup")
-async def startup_event():
-    """Выполняется при запуске приложения"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Код, который выполняется ПЕРЕД запуском приложения (startup)
     try:
         run_pre_startup_validations()
         logger.info("🚀 Приложение готово к работе")
@@ -21,9 +40,43 @@ async def startup_event():
         logger.critical(f"❌ Критическая ошибка при запуске: {e}")
         raise
 
+    yield  # Здесь работает приложение
+
+    # Код, который выполняется ПОСЛЕ остановки приложения (shutdown)
+    logger.info("🛑 Приложение остановлено")
+
+
+app = FastAPI(
+    title=settings.app_name,
+    version=settings.app_version,
+    lifespan=lifespan,
+    debug=settings.debug
+)
+add_middlewares(app)
+
 
 app.include_router(router=detectors_router, prefix="/api")
+
 
 @app.get("/")
 async def root():
     return {"message": "SPAS timeseries analyzer"}
+
+
+@app.get("/health")
+def health_check():
+    return {
+        "app_name": settings.app_name,
+        "version": settings.app_version,
+        "debug": settings.debug
+    }
+
+
+# if __name__ == "__main__":
+#     uvicorn.run(
+#         "main:app",
+#         host=settings.host,
+#         port=settings.port,
+#         reload=True,
+#         use_colors=False
+#     )

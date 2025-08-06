@@ -23,22 +23,6 @@ def check_detectors_config() -> Dict[str, Any]:
         logger.error(f"❌ Не удалось импортировать конфигурацию: {e}")
         raise ImportError("Файл конфигурации не найден или ошибка импорта")
 
-    # Проверка типов
-    if not isinstance(DETECTORS, dict):
-        logger.error(f"❌ DETECTORS должен быть dict, получено {type(DETECTORS)}")
-        raise TypeError("Некорректный тип DETECTORS - должен быть словарем")
-
-    # Проверка на пустоту
-    if len(DETECTORS) == 0:
-        logger.warning("⚠️ Словарь DETECTORS пуст")
-        raise ValueError("Словарь доступных детекторов пуст")
-
-
-    logger.info(f"📊 Найдено {len(DETECTORS)} детекторов:")
-    for name in DETECTORS.keys():
-        logger.info(f"  • {name}: {DETECTORS[name]["path"]}")
-        logger.info(f"      Описание: {DETECTORS[name]["description"]}")
-
     return DETECTORS
 
 
