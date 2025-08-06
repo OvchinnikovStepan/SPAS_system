@@ -40,7 +40,7 @@ def routing_func(
             if detector_type not in DETECTORS:
                 raise ValueError(f"Unknown detector type: {detector_type}. Available: {list(DETECTORS.keys())}")
 
-            module_path, func_name = DETECTORS[detector_type].rsplit('.', 1)
+            module_path, func_name = DETECTORS[detector_type]["path"].rsplit('.', 1)
             detector_module = import_module(module_path)
             detector_func = getattr(detector_module, func_name)
 
