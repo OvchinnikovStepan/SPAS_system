@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/detectors', tags=['Детекторы'])
 
+
 def check_detectors_config() -> Dict[str, Any]:
     """Проверяет конфигурацию и возвращает её при успехе"""
 
@@ -82,11 +83,7 @@ def check_detectors_config() -> Dict[str, Any]:
             status_code=200,
             description="Получение списка всех детекторов",
             response_description="Список всех детекторов с их описанием",
-            responses={
-                200: {"description": "Список детекторов успешно получен"},
-                500: {"description": "Не удалось получить список детекторов"}
-            }
-)
+            )
 async def get_detectors() -> Dict[str, str]:
     """
         Возвращает список названий всех доступных детекторов.
@@ -104,8 +101,8 @@ async def get_detectors() -> Dict[str, str]:
              description="Принимает временной ряд и запускает указанные детекторы аномалий",
              response_description="DataFrame с результатами анализа по каждому детектору",
              status_code=200
-)
-def run_detectors(request: SRequest) -> SResponse:
+             )
+async def run_detectors(request: SRequest) -> SResponse:
     try:
         # Преобразуем входной словарь в Series
         series = pd.Series(request.series)
@@ -114,25 +111,34 @@ def run_detectors(request: SRequest) -> SResponse:
         # Запускаем детекторы
         detector_results = routing_func(series=series, models=request.models)
 
-        # Создаём общий DataFrame с результатами
         if detector_results:
-            df_result = pd.DataFrame(index=series.index)
-            for detector_name, result in detector_results.items():
-                df_result[detector_name] = result
+            # Создаём DataFrame с False для всех точек по умолчанию
+            df_result = pd.DataFrame(False, index=series.index, columns=detector_results.keys(), dtype=bool)
 
-            # Преобразуем в ответ
-            return SResponse(
-                index=[str(idx) for idx in df_result.index],
-                columns=list(df_result.columns),
-                data=df_result.values.tolist()
-            )
+            # Заполняем True для выделенных точек
+            for detector_name, result in detector_results.items():
+                if isinstance(result, pd.Series):
+                    # Если результат - Series с индексами выделенных точек
+                    df_result.loc[result.index, detector_name] = True
+                elif isinstance(result, (list, pd.Index)):
+                    # Если результат - список индексов
+                    df_result.loc[result, detector_name] = True
+
+            # Преобразуем в формат {timestamp: {detector: result}}
+            results_dict = {}
+            for idx in df_result.index:
+                results_dict[str(idx)] = df_result.loc[idx].to_dict()
+
+            return SResponse(results=results_dict)
         else:
-            # Если нет результатов, возвращаем пустую структуру
-            return SResponse(
-                index=[str(idx) for idx in series.index],
-                columns=[],
-                data=[[] for _ in series.index]
-            )
+            # Если нет результатов, возвращаем False для всех детекторов
+            results_dict = {}
+            detector_names = list(request.models.keys())  # Используем запрошенные детекторы
+
+            for idx in series.index:
+                results_dict[str(idx)] = {detector: False for detector in detector_names}
+
+            return SResponse(results=results_dict)
 
     except Exception as e:
         raise HTTPException(

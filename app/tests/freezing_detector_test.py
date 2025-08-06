@@ -3,7 +3,7 @@ def test_freezing_detector_visual():
     import matplotlib.pyplot as plt
     import numpy as np
     import pandas as pd
-    from freezing_detector import freezing_detector
+    from app.src.detectors.freezing_detector import freezing_detector
     # Создаем тестовые данные
     np.random.seed(42)
     dates = pd.date_range(start="2023-01-01", periods=300, freq="5min")
@@ -46,6 +46,7 @@ def test_freezing_detector_visual():
     
     # Проверка результатов
     print("Результаты проверки:")
+    print(frozen.dtype)
     for start, end in real_frozen_ranges:
         detected = sum(series.index[i] in frozen.index for i in range(start, end))
         print(f"Участок [{start}-{end}]: обнаружено {detected}/{end-start} точек")
