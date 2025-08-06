@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 
-def avalanch_detector(
+def avalanche_detector(
         series: pd.Series,
         statistic: pd.Series = None,
         last_point: pd.Timestamp = None,
