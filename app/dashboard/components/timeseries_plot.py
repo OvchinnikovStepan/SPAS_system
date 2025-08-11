@@ -1,113 +1,87 @@
-from ast import Pass
-from pandas._config import display
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
-from streamlit_plotly_events import plotly_events
 
 
-def show_timeseries_plot(df: pd.DataFrame):
+def show_timeseries_plot(df: pd.DataFrame) -> None:
     """
-    Отображает интерактивный график временного ряда с выбором признака и возможностью выделять и сохранять область.
-    
-    Параметры: 
-        pandas DataFrame с временным индексом и признаками
+    Отображает простой график временного ряда с выбором признака.
+    Легенда включена. Оси и легенда оформлены в контрастном стиле.
 
-    Возвращает:
-        DataFrame с точками в выделенной области или None
+    Параметры:
+        df: pandas DataFrame с временным индексом и признаками
     """
+
     feature = st.selectbox("Выберите признак для отображения:", df.columns)
-
-    if 'last_feature' not in st.session_state:
-        st.session_state['last_feature'] = feature
-    if st.session_state['last_feature'] != feature:
-        st.session_state['selected_points_df'] = None
-        st.session_state['last_points'] = None
-    st.session_state['last_feature'] = feature
 
     data = df[[feature]].copy()
     data = data.reset_index().rename(columns={data.index.name or 'index': 'Время'})
 
-    col_use, col_clear = st.columns(2)
-    with col_use:
-        use_btn = st.button("Использовать выделенную область", key="use_selection")
-    with col_clear:
-        clear_btn = st.button("Очистить выделение", key="clear_selection")
     fig = go.Figure()
-    fig.add_trace(go.Scatter(
-        x=data['Время'],
-        y=data[feature],
-        mode='lines+markers',
-        name="Основной ряд",
-        line=dict(color="#1976d2", width=2),
-        marker=dict(size=6, color="#1976d2", line=dict(width=0)),
-        opacity=0.9,
-        showlegend=True
-    ))
-    if st.session_state.get('selected_points_df') is not None and not st.session_state['selected_points_df'] is None and not st.session_state['selected_points_df'].empty:
-        selected_df = st.session_state['selected_points_df']
-        fig.add_trace(go.Scatter(
-            x=selected_df['Время'],
-            y=selected_df[feature],
+    fig.add_trace(
+        go.Scatter(
+            x=data['Время'],
+            y=data[feature],
             mode='lines+markers',
-            name="Выделенные точки",
-            line=dict(color="#43a047", width=2),
-            marker=dict(size=10, color="#43a047", symbol="diamond"),
-            opacity=1.0,
-            showlegend=True
-        ))
+            name=feature,
+            line=dict(color="#1565c0", width=2.5),
+            marker=dict(size=6, color="#1565c0"),
+            opacity=0.95,
+            showlegend=True,
+        )
+    )
+
     fig.update_layout(
-        dragmode='select',
-        selectdirection='h',
-        margin=dict(l=40, r=20, t=50, b=40),
-        plot_bgcolor="#fafafa",
-        paper_bgcolor="#fafafa",
-        font=dict(family="Montserrat, Arial", size=14),
-        title=dict(x=0.5, font=dict(size=20)),
+        margin=dict(l=50, r=30, t=40, b=50),
+        plot_bgcolor="#ffffff",
+        paper_bgcolor="#ffffff",
+        font=dict(family="Montserrat, Arial", size=14, color="#111111"),
+        hovermode="x unified",
+        legend=dict(
+            bgcolor="#ffffff",
+            bordercolor="#111111",
+            borderwidth=1,
+            font=dict(color="#111111"),
+            orientation='h',
+            x=0,
+            y=1.1,
+        ),
         xaxis=dict(
             title="Дата",
             tickangle=0,
             tickformat="%d.%m.%Y",
             showgrid=True,
-            gridcolor="#e0e0e0",
-            ticklabelmode="period",
+            gridcolor="#d0d0d0",
+            zeroline=False,
+            ticks="outside",
+            tickcolor="#111111",
+            ticklen=6,
+            linecolor="#111111",
+            linewidth=2,
+            mirror=True,
             automargin=True,
-            tickfont=dict(size=12),
-            titlefont=dict(size=16)
+            ticklabelmode="period",
+            titlefont=dict(size=16, color="#111111"),
+            tickfont=dict(size=12, color="#111111"),
         ),
         yaxis=dict(
             title=feature,
             showgrid=True,
-            gridcolor="#e0e0e0",
-            tickfont=dict(size=12),
-            titlefont=dict(size=16),
-            automargin=True
+            gridcolor="#d0d0d0",
+            zeroline=False,
+            ticks="outside",
+            tickcolor="#111111",
+            ticklen=6,
+            linecolor="#111111",
+            linewidth=2,
+            mirror=True,
+            automargin=True,
+            titlefont=dict(size=16, color="#111111"),
+            tickfont=dict(size=12, color="#111111"),
         ),
-        hovermode="x unified"
     )
-    fig.update_xaxes(nticks=min(10, len(data)))
 
-    selected_points = plotly_events(fig, select_event=True, override_height=500, override_width='100%')
+    fig.update_xaxes(nticks=min(12, max(4, len(data) // 7)))
 
-    if 'selected_points_df' not in st.session_state:
-        st.session_state['selected_points_df'] = None
-    if 'last_points' not in st.session_state:
-        st.session_state['last_points'] = None
-
-    if selected_points:
-        indices = [pt['pointIndex'] for pt in selected_points]
-        selected_df = data.iloc[indices].sort_values('Время')
-        st.session_state['last_points'] = selected_df
-
-    if use_btn and st.session_state['last_points'] is not None:
-        st.session_state['selected_points_df'] = st.session_state['last_points']
-        st.rerun()
-    if clear_btn:
-        st.session_state['selected_points_df'] = None
-        st.session_state['last_points'] = None
-        st.rerun()
-
-    # Возвращаем DataFrame с точками в выделенной области или None
-    return st.session_state['selected_points_df']
+    st.plotly_chart(fig, use_container_width=True)
         
