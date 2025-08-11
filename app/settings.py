@@ -1,7 +1,6 @@
 # app/settings.py
 from pydantic_settings import BaseSettings
 from typing import Optional
-import os
 
 
 class Settings(BaseSettings):
@@ -12,7 +11,7 @@ class Settings(BaseSettings):
 
     # Настройки сервера
     host: str = "127.0.0.1"
-    port: int = 8001
+    port: int = 8000
 
     # Настройки логирования
     log_level: str = "INFO"
@@ -23,6 +22,6 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-# Создаем экземпляр настроек
-settings = Settings()
 
+
+settings = Settings()

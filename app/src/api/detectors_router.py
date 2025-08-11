@@ -38,7 +38,13 @@ async def get_detectors() -> Dict[str, Any]:
     """
     try:
         detectors = check_detectors_config()
-        return detectors
+        filtered_response = {}
+        for detector_name, detector_config in detectors.items():
+            # Исключаем ключ "path"
+            filtered_config = {k: v for k, v in detector_config.items() if k != "path"}
+            filtered_response[detector_name] = filtered_config
+
+        return filtered_response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Ошибка конфигурации: {str(e)}")
 
