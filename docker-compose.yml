@@ -1,7 +1,9 @@
 version: '3.8'
 
 services:
-  app:
+  spas_api_app:
+    image: spas_api_app
+    container_name: spas_system_api
     build: .
     ports:
       - "8000:8000"
