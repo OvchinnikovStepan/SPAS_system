@@ -8,6 +8,6 @@ def validate_datetime_index(df: pd.DataFrame) -> None:
     """
     if not isinstance(df.index, pd.DatetimeIndex):
         try:
-            df.index = pd.to_datetime(df.index)
+            df.index = pd.to_datetime(df.index, format='mixed')
         except Exception:
             raise ValueError("Индекс не удалось привести к DatetimeIndex. Проверьте формат дат в индексе.")
