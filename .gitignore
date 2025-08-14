@@ -2,6 +2,7 @@
 __pycache__/
 *.py[codz]
 *$py.class
+json_df
 
 # C extensions
 *.so
