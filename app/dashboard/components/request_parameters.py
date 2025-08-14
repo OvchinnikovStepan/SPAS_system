@@ -2,7 +2,7 @@ import os
 from typing import Any, Dict, Union
 import requests
 
-DETECTORS_URL = os.getenv("DETECTORS_URL", "http://169.254.164.26:8000/api/detectors")
+DETECTORS_URL = os.getenv("DETECTORS_URL", "http://172.20.10.3:8000/api/detectors")
 
 class ParametersRequestError(Exception):
     """Исключение для ошибок при запросе параметров."""
@@ -99,8 +99,6 @@ def request_parameters() -> Union[Dict[str, Dict[str, Any]], Dict[str, str]]:
             "outlier": outlier_parameters(response),
         }
     except ParametersRequestError as e:
-        return {"error": e.message}
+        return {"Ошибка1 error": e.message}
     except Exception as e:
-        return {"error": f"Неожиданная ошибка: {e}"}
-
-print(request_parameters())
+        return {"Ошибка2 error": f"Неожиданная ошибка: {e}"}
