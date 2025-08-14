@@ -3,7 +3,7 @@ from typing import Dict, Any, Union
 import pandas as pd
 
 
-class SRequest(BaseModel):
+class SDetectorRequest(BaseModel):
     series: Dict[str, float] = Field(..., description="Фрейм с данными для анализа")
     models: Dict[str, Dict[str, Any]] = Field(..., description="модели и соответствующие им параметры")
 

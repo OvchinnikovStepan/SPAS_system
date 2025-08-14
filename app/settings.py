@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     # Настройки логирования
     log_level: str = "INFO"
 
+    data_dir: str = "app.src.data"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

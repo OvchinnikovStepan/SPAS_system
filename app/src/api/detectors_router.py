@@ -2,8 +2,8 @@ from fastapi import APIRouter, HTTPException
 from typing import Dict, Any, List
 import pandas as pd
 import logging
-from app.src.schemas.response_schema import SResponse
-from app.src.schemas.request_schema import SRequest
+from app.src.schemas.detector_response_schema import SDetectorResponse
+from app.src.schemas.detector_request_schema import SDetectorRequest
 from app.src.services.routing_func import routing_func
 
 logger = logging.getLogger(__name__)
@@ -51,12 +51,12 @@ async def get_detectors() -> Dict[str, Any]:
 
 @router.post("",
              summary="Провести проверку по детекторам",
-             response_model=SResponse,
+             response_model=SDetectorResponse,
              description="Принимает временной ряд и запускает указанные детекторы аномалий",
              response_description="DataFrame с результатами анализа по каждому детектору",
              status_code=200
              )
-async def run_detectors(request: SRequest) -> SResponse:
+async def run_detectors(request: SDetectorRequest) -> SDetectorResponse:
     try:
         # Преобразуем входной словарь в Series
         series = pd.Series(request.series)
@@ -83,7 +83,7 @@ async def run_detectors(request: SRequest) -> SResponse:
             for idx in df_result.index:
                 results_dict[str(idx)] = df_result.loc[idx].to_dict()
 
-            return SResponse(results=results_dict)
+            return SDetectorResponse(results=results_dict)
         else:
             # Если нет результатов, возвращаем False для всех детекторов
             results_dict = {}
@@ -92,7 +92,7 @@ async def run_detectors(request: SRequest) -> SResponse:
             for idx in series.index:
                 results_dict[str(idx)] = {detector: False for detector in detector_names}
 
-            return SResponse(results=results_dict)
+            return SDetectorResponse(results=results_dict)
 
     except Exception as e:
         raise HTTPException(

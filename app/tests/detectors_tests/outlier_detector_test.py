@@ -20,6 +20,8 @@ def test_api_outlier_detector(url):
 
     series = pd.Series(values, index=dates)
 
+    print(series)
+
     # 2. Подготавливаем данные для API
     series_dict = {str(idx): float(val) for idx, val in series.items()}
 

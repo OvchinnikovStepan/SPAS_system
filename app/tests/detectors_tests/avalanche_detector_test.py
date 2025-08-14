@@ -43,6 +43,7 @@ def test_api_avalanche_detector(url):
             }
         }
     }
+    print(request_data)
 
     # 3. Отправляем запрос к API
 

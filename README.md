@@ -31,7 +31,7 @@ docker-compose up -d
 ```bash
 docker-compose down -v
 ``` 
-
+[avalanche_detector.py](app%2Fsrc%2Fdetectors%2Favalanche_detector.py)
 **Для запуска в консольном режиме, в корневой папке прописать:**
 ```bash
 docker-compose up --build

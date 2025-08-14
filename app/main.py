@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from app.src.middleware import add_middlewares
 from app.settings import settings
 from app.src.api.detectors_router import router as detectors_router
+from app.src.api.data_router import router as data_router
 from app.tests.pre_startup_validators.run_all_pre_startup_validators import run_pre_startup_validations
 
 coloredlogs.install(
@@ -53,6 +54,7 @@ app = FastAPI(
 add_middlewares(app)
 
 app.include_router(router=detectors_router, prefix="/api")
+app.include_router(router=data_router, prefix="/api")
 
 
 @app.get("/",

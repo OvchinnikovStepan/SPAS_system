@@ -102,3 +102,17 @@ def outlier_detector(
             checked_points = pd.concat([checked_points, checked_points_on_step])
 
         return checked_points
+
+#
+# {
+#     [
+#         {
+#             'd': '2020-02-21 12:00',
+#             'v': 213
+#         },
+#         {
+#             'd': '2020-02-21 13:00',
+#             'v': 213
+#         }
+#     ]
+# }

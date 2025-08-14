@@ -1,7 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Dict, Any, Union
 
-class SResponse(BaseModel):
+
+class SDetectorResponse(BaseModel):
     results: Dict[str, Dict[str, Union[float, int, bool, None]]] \
         = Field(..., description="Результаты прогона детекторов")
 
