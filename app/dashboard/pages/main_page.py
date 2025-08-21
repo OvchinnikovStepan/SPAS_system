@@ -2,11 +2,11 @@ import streamlit as st
 from dashboard.services.upload_data import upload_data
 from dashboard.components.timeseries_plot import show_timeseries_plot
 from dashboard.utils.validate_data import validate_data
-from dashboard.components.recording_parameters import display_detector_parameters
-from dashboard.components.request_detectors_output import send_detectors_request
+from dashboard.api.recording_parameters import display_detector_parameters
+from dashboard.api.request_detectors_output import send_detectors_request
 
 def main_page():
-    st.title("SPAS System")
+    st.title("SPAS KIP System")
     
     # Загружаем данные
     df = upload_data()
@@ -23,7 +23,7 @@ def main_page():
         feature = show_timeseries_plot(
             df, 
             st.session_state.detectors_results,
-            key="main_timeseries_plot"  # Добавляем уникальный ключ
+            key="main_timeseries_plot"
         )
         st.session_state.feature = feature
 
