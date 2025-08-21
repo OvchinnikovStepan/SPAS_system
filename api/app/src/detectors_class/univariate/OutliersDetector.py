@@ -37,13 +37,16 @@ class OutliersDetector(UnivariateModels):
         self.outlier_sensity = (
             'medium' if outlier_sensity is None else outlier_sensity
         )
-        self.bound_coef = bound_coef if bound_coef is None else bound_coef
-        if self.outlier_sensity == 'low':
-            self.bound_coef = 10
-        elif self.outlier_sensity == 'medium':
-            self.bound_coef = 7
-        elif self.outlier_sensity == 'high':
-            self.bound_coef = 5
+
+        if bound_coef is None:
+            if self.outlier_sensity == 'low':
+                self.bound_coef = 10
+            elif self.outlier_sensity == 'medium':
+                self.bound_coef = 7
+            elif self.outlier_sensity == 'high':
+                self.bound_coef = 5
+        else:
+            self.bound_coef = bound_coef
 
         self.hi_percent = hi_percent
         self.low_percent = low_percent
