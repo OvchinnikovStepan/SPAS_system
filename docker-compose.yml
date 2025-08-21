@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  spas_api_app:
+    image: spas_api_app
+    container_name: spas_system_api
+    build:
+      context: .
+      dockerfile: Dockerfile_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - api/.env.example7
+    volumes:
+      - .:/api/app  # Для разработки с hot-reload
+    environment:
+      - ENVIRONMENT=development
