@@ -11,12 +11,12 @@ class AvalancheDetector(UnivariateModels):
     MODEL_TYPE = 'UNIVARIATE_ANOMALY'
 
     def __init__(self,
-                 trend_sensity: str = 'medium',
+                 sensity: str = 'medium',
                  hi_percent: float = 0.95,
                  low_percent: float = 0.05,
                  bound_coef: int = 5,
-                 statistic_len: int = 144,
-                 statistic_len_for_mean: int = 12,
+                 statistic_len: int = 30,
+                 statistic_len_for_mean: int = 5,
                  *args,
                  **kwargs
                  ):
@@ -32,16 +32,10 @@ class AvalancheDetector(UnivariateModels):
         statistic_len_for_mean (int): длина статистики для расчета среднего значения.
         """
 
-        self.trend_sensity = (
-            'medium' if trend_sensity is None else trend_sensity
-        )
-        self.bound_coef = bound_coef if bound_coef is None else bound_coef
-        if self.trend_sensity == 'low':
-            self.bound_coef = 10
-        elif self.trend_sensity == 'medium':
-            self.bound_coef = 7
-        elif self.trend_sensity == 'high':
-            self.bound_coef = 5
+        if bound_coef is None:
+            self.bound_coef = {'low': 10, 'medium': 7, 'high': 5}.get(sensity, 7)
+        else:
+            self.bound_coef = bound_coef
 
         self.hi_percent = hi_percent
         self.low_percent = low_percent
@@ -54,97 +48,95 @@ class AvalancheDetector(UnivariateModels):
             statistic: pd.Series = None,
             last_point: pd.Timestamp = None,
     ):
-        """
-        Метод обнаруженя лавинной скорости.
 
-        Аргументы:
-        series (pd.Series): входные данные для расчета выбросов;
-        statistic (pd.Series): история значений для расчета статистики;
-        last_point (pd.Timestamp): предыдущая последняя точка, которая была в расчете.
-
-        Алгоритм "лавинная скорость":
-        1. На вход подается 2-х часовое окно сырых данных
-        2. Производится проверка условий. Лавинная скорость отмечается, когда выполняются все 3 условия: <br>
-            1) предпоследняя точка сильно отклоняется от предыдущей точки - с учетом временных интервалов
-            2) последняя точка отклоняется в ту же сторону от предпоследней - без учета временных интервалов
-            3) (
-                предпоследняя точка сильно отклоняется от среднего - без учета временных интервалов
-                или
-                последняя точка сильно отклоняется от предыдущей точки - с учетом временных интервалов
-            )
-        Возврат:
-        anomaly_status (int): статус аномалии.
-        """
-
+        # Убираем NaN/inf
+        series = series.replace([np.inf, -np.inf], np.nan).dropna()
         series = series.groupby(series.index).last()
+
+        if statistic is not None:
+            statistic = statistic.replace([np.inf, -np.inf], np.nan).dropna()
+
         if statistic is None or statistic.empty:
             statistic = series.iloc[:-1]
             last_point = series.index[-2]
 
-        # std разностей без учета временных интервалов
-        # вычисляем разности в статистике
-        statistics_diff = (statistic - statistic.shift(1)).dropna().abs()
-        # отсекаем разности по квантилям и считаем std
-        diff_std = statistics_diff[(statistics_diff <= statistics_diff.quantile(self.hi_percent)) * (
-                    statistics_diff >= statistics_diff.quantile(self.low_percent))].std()
+        def detection_step(series, statistic, last_point):
+            statistics_diff = (statistic - statistic.shift(1)).dropna().abs()
 
-        # std разностей с учетом временных интервалов
-        # делим разности в статистике на временные интервалы
-        statistics_diff_scaled = statistics_diff / ((statistic.index[1:] - statistic.index[:-1]).seconds / 60)
-        # отсекаем разности по кванитлям (без учета временных интервалов)
-        statistics_diff_scaled = statistics_diff_scaled[
-            (statistics_diff <= statistics_diff.quantile(self.hi_percent)) * (
-                        statistics_diff >= statistics_diff.quantile(self.low_percent))]
-        # считаем std
-        diff_std_scaled = statistics_diff_scaled.std()
+            if statistics_diff.empty:
+                return pd.Series(dtype=float), statistic, last_point
 
-        clear_statistics = statistic[
-            (statistic <= statistic.quantile(self.hi_percent)) * (statistic >= statistic.quantile(self.low_percent))]
-        week_std = clear_statistics.std()
-        self.mean = np.mean(clear_statistics.iloc[-12:])
+            q_hi = statistics_diff.quantile(self.hi_percent)
+            q_lo = statistics_diff.quantile(self.low_percent)
+            diff_std = statistics_diff[(statistics_diff <= q_hi) & (statistics_diff >= q_lo)].std()
 
-        new_points = series.loc[last_point:].iloc[1:]
+            # Маска времени (избегаем деления на 0)
+            time_deltas = (statistic.index[1:] - statistic.index[:-1]).seconds / 60
+            time_deltas = np.where(time_deltas == 0, np.nan, time_deltas)
 
-        points_to_check = series.loc[last_point:].iloc[1:]
-        diff = (series - series.shift(1)).dropna() / ((series.index[1:] - series.index[:-1]).seconds / 60)
-        prev_diff = diff.shift(1).dropna()
+            statistics_diff_scaled = statistics_diff / time_deltas
+            statistics_diff_scaled = statistics_diff_scaled[(statistics_diff <= q_hi) & (statistics_diff >= q_lo)]
+            diff_std_scaled = statistics_diff_scaled.std()
 
-        # пересечение для всех трех: diff, prev_diff, points_to_check
-        index_to_check = points_to_check.index.intersection(diff.index).intersection(prev_diff.index)
-        diff = diff[index_to_check]
-        prev_diff = prev_diff[index_to_check]
-        points_to_check = points_to_check[index_to_check]
+            clear_statistics = statistic[(statistic <= statistic.quantile(self.hi_percent)) &
+                                         (statistic >= statistic.quantile(self.low_percent))]
+            mean = np.mean(clear_statistics.iloc[-self.statistic_len_for_mean:]) if not clear_statistics.empty else 0
 
-        cond_1 = (prev_diff).abs() > self.bound_coef * diff_std_scaled
-        cond_2 = (prev_diff) * (diff) > 0
-        cond_3 = ((points_to_check - self.mean).abs() > self.bound_coef * diff_std) + (
-                    diff.abs() > self.bound_coef * diff_std_scaled)
+            points_to_check = series.loc[last_point:].iloc[1:]
+            diff = (series - series.shift(1)).dropna()
+            delta = (series.index[1:] - series.index[:-1]).seconds / 60
+            delta = np.where(delta == 0, np.nan, delta)
+            diff = diff / delta
 
-        speed_status = points_to_check[cond_1 & cond_2 & cond_3]
+            prev_diff = diff.shift(1).dropna()
 
-        if speed_status.any():
-            self.anomaly_status = 1
+            index_to_check = points_to_check.index.intersection(diff.index).intersection(prev_diff.index)
+            diff = diff[index_to_check]
+            prev_diff = prev_diff[index_to_check]
+            points_to_check = points_to_check[index_to_check]
+
+            cond_1 = prev_diff.abs() > self.bound_coef * diff_std_scaled
+            cond_2 = True
+            cond_3 = ((points_to_check - mean).abs() > self.bound_coef * diff_std) | (
+                        diff.abs() > self.bound_coef * diff_std_scaled)
+
+            checked_points = points_to_check[cond_1 & cond_2 & cond_3]
+
+            if statistic is not None and not statistic.empty:
+                new_points = points_to_check.copy().drop_duplicates()
+                if not new_points.empty:
+                    try:
+                        if statistic.iloc[-1] == new_points.iloc[0]:
+                            new_points.drop(new_points.index[0], inplace=True)
+                    except IndexError:
+                        pass
+                    if not new_points.empty:
+                        statistic = pd.concat([statistic, new_points])
+                        statistic = statistic.iloc[-self.statistic_len:]
+
+            last_point = series.index[-1]
+            statistic = statistic.groupby(statistic.index).last()
+
+            return checked_points, statistic, last_point
+
+        checked_points = pd.Series(dtype=float)
+
+        while len(series) > 100:
+            checked_points_on_step, statistic, last_point = detection_step(
+                series=series[:100], statistic=statistic, last_point=last_point
+            )
+            if not checked_points_on_step.empty:
+                checked_points = pd.concat(
+                    [checked_points, checked_points_on_step]) if not checked_points.empty else checked_points_on_step
+            series = series[99:]
         else:
-            self.anomaly_status = 0
+            checked_points_on_step, _, _ = detection_step(series=series, statistic=statistic, last_point=last_point)
+            if not checked_points_on_step.empty:
+                checked_points = pd.concat(
+                    [checked_points, checked_points_on_step]) if not checked_points.empty else checked_points_on_step
 
-        if not (statistic is None or statistic.empty):
-            # new_points = points_to_check.drop(
-            #     index=speed_status.index, errors='ignore'
-            #     )
-            new_points = points_to_check.copy()
-            new_points.drop_duplicates(inplace=True)
-            try:
-                if statistic[-1] == new_points[0]:
-                    new_points.drop(new_points.index[0], inplace=True)
-            except IndexError:
-                pass
-            statistic = pd.concat([statistic, new_points])
-            statistic = statistic.iloc[-self.statistic_len:]
-        last_point = series.index[-1]
-
-        statistic = statistic.groupby(statistic.index).last()
-
-        return self.anomaly_status, statistic, last_point
+        # Возвращаем только checked_points как в функции avalanche_detector
+        return checked_points
 
     def fit(self):
         pass

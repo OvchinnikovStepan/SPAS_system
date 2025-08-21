@@ -13,8 +13,6 @@ def avalanche_detector(
         statistic_len: int = 30,
         statistic_len_for_mean: int = 5,
 ):
-    import numpy as np
-    import pandas as pd
 
     if bound_coef is None:
         bound_coef = {'low': 10, 'medium': 7, 'high': 5}.get(sensity, 7)
