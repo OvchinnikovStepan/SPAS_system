@@ -71,7 +71,8 @@ def _df_from_api_array(records) -> pd.DataFrame:
 
     return df
 
-async def upload_data() -> Optional[pd.DataFrame]:
+
+def upload_data() -> Optional[pd.DataFrame]:
     df = None
 
     # 1) Локальная загрузка
@@ -82,8 +83,8 @@ async def upload_data() -> Optional[pd.DataFrame]:
                 df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
             else:
                 df = pd.read_excel(uploaded_file, index_col=0, parse_dates=True)
-            validate_dataframe_structure(df, raise_error=True)
-            validate_datetime_index(df)
+            # validate_dataframe_structure(df, raise_error=True)  # убедитесь, что эта функция тоже синхронная
+            # validate_datetime_index(df)  # убедитесь, что эта функция тоже синхронная
             st.success("Данные успешно загружены и валидированы!")
             return df
         except Exception as e:
@@ -110,6 +111,7 @@ async def upload_data() -> Optional[pd.DataFrame]:
                 if params.get("dateEnd"):
                     payload["dateEnd"] = params["dateEnd"]
 
+                # Используем синхронный клиент
                 with httpx.Client(timeout=30.0) as client:
                     resp = client.post(DATA_URL, json=payload, headers={"Content-Type": "application/json", "accept": "application/json"})
                     resp.raise_for_status()

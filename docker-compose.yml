@@ -10,8 +10,21 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - api/.env.example7
+      - api/.env.example
     volumes:
       - .:/api/app  # Для разработки с hot-reload
+    environment:
+      - ENVIRONMENT=development
+
+  spas_dashboard_app:
+    image: spas_dashboard_app
+    container_name: spas_system_dashboard
+    build:
+      context: .
+      dockerfile: Dockerfile_dashboard
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/dashboard
     environment:
       - ENVIRONMENT=development
