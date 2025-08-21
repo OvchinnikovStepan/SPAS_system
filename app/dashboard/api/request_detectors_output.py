@@ -2,10 +2,11 @@ import os
 from typing import Any, Dict, Mapping, Optional, Union
 import pandas as pd
 import requests
+import streamlit as st
 from .recording_parameters import get_detector_parameters_for_api
 
-
-DETECTORS_URL = os.getenv("DETECTORS_URL", "http://172.20.10.3:8000/api/detectors")
+API_BASE = st.secrets['API_URL'].rstrip('/')
+DETECTORS_URL = f"{API_BASE}/detectors"
 
 
 def _series_to_payload_dict(

@@ -1,8 +1,11 @@
 import os
 from typing import Any, Dict, Union
 import requests
+import streamlit as st
 
-DETECTORS_URL = os.getenv("DETECTORS_URL", "http://172.20.10.3:8000/api/detectors")
+
+API_BASE = st.secrets['API_URL'].rstrip('/')
+DETECTORS_URL = f"{API_BASE}/detectors"
 
 class ParametersRequestError(Exception):
     """Исключение для ошибок при запросе параметров."""

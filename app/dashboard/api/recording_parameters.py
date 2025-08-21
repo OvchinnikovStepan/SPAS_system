@@ -247,8 +247,7 @@ def display_detector_parameters():
                             "Коэффициент границы:",
                             value=float(bound_coef) if isinstance(bound_coef, (int, float)) else 1.0,
                             min_value=0.0,
-                            step=0.001,
-                            format="%.3f",
+                            step=0.1,
                             key="config_avalanche_bound_coef"
                         )
                 
@@ -260,8 +259,7 @@ def display_detector_parameters():
                             "Коэффициент границы:",
                             value=float(bound_coef) if isinstance(bound_coef, (int, float)) else 1.0,
                             min_value=0.0,
-                            step=0.001,
-                            format="%.3f",
+                            step=0.1,
                             key="config_outlier_bound_coef"
                         )
                 
