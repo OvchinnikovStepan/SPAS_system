@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-def outlier_detector(
+def outliers_detector(
     series: pd.Series,
     statistic: pd.Series = None,
     last_point: pd.Timestamp = None,
