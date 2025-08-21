@@ -2,7 +2,7 @@
 
 DETECTORS = {
     "avalanche": {
-        "path": "app.src.detectors.avalanche_detector.avalanche_detector",
+        "path": "api.app.src.detectors.avalanche_detector.avalanche_detector",
         "description": "Анализ лавинной скорости",
         "params": {
             "statistic": "pd.Series",
@@ -16,7 +16,7 @@ DETECTORS = {
         }
     },
     "freezing": {
-        "path": "app.src.detectors.freezing_detector.freezing_detector",
+        "path": "api.app.src.detectors.freezing_detector.freezing_detector",
         "description": "Анализ залипаний",
         "params": {
             "freezing_count": "int",
@@ -24,7 +24,7 @@ DETECTORS = {
         }
     },
     "outlier": {
-        "path": "app.src.detectors.outlier_detector.outlier_detector",
+        "path": "api.app.src.detectors.outlier_detector.outlier_detector",
         "description": "Анализ выбросов",
         "params": {
             "statistic": "pd.Series",

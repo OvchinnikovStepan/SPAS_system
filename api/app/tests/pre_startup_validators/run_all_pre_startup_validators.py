@@ -1,9 +1,9 @@
 import logging
-from app.tests.pre_startup_validators.basic_functionality_validator import validate_basic_functionality
-from app.tests.pre_startup_validators.dependencies_validator import validate_dependencies
-from app.tests.pre_startup_validators.detectors_functions_validator import validate_detector_functions
-from app.tests.pre_startup_validators.detectors_import_validator import validate_detector_imports
-from app.tests.pre_startup_validators.detectors_modules_validator import validate_detector_modules
+from api.app.tests.pre_startup_validators.basic_functionality_validator import validate_basic_functionality
+from api.app.tests.pre_startup_validators.dependencies_validator import validate_dependencies
+from api.app.tests.pre_startup_validators.detectors_functions_validator import validate_detector_functions
+from api.app.tests.pre_startup_validators.detectors_import_validator import validate_detector_imports
+from api.app.tests.pre_startup_validators.detectors_modules_validator import validate_detector_modules
 
 logger = logging.getLogger(__name__)
 

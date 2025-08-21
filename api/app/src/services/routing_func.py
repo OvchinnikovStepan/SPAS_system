@@ -2,7 +2,7 @@ from typing import Dict, Any, Union
 from importlib import import_module
 import logging
 import pandas as pd
-from app.config import DETECTORS
+from api.app.config import DETECTORS
 
 logger = logging.getLogger(__name__)
 

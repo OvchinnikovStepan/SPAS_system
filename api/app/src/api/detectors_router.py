@@ -1,10 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
+from typing import Dict, Any
 import pandas as pd
 import logging
-from app.src.schemas.detector_response_schema import SDetectorResponse
-from app.src.schemas.detector_request_schema import SDetectorRequest
-from app.src.services.routing_func import routing_func
+from api.app.src.schemas.detector_response_schema import SDetectorResponse
+from api.app.src.schemas.detector_request_schema import SDetectorRequest
+from api.app.src.services.routing_func import routing_func
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ def check_detectors_config() -> Dict[str, Any]:
 
     try:
         # Попытка импорта
-        from app.config import DETECTORS
+        from api.app.config import DETECTORS
         logger.info("✅ Файл конфигурации успешно импортирован")
 
     except ImportError as e:

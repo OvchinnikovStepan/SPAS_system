@@ -1,12 +1,12 @@
 from pathlib import Path
-from app.settings import settings
+from api.app.settings import settings
 from datetime import datetime
 from typing import List
 from fastapi import HTTPException
 import json
-from app.src.schemas.data_file_schema import SFileInfo
-from app.src.schemas.data_point_schema import SDataPoint
-from app.src.schemas.data_request_schema import SDataRequest
+from api.app.src.schemas.data_file_schema import SFileInfo
+from api.app.src.schemas.data_point_schema import SDataPoint
+from api.app.src.schemas.data_request_schema import SDataRequest
 import logging
 import re
 
