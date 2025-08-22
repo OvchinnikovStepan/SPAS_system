@@ -43,7 +43,6 @@ def show_timeseries_plot(
 
     fig = go.Figure()
 
-    # --- основной ряд (WebGL-линия без маркеров) ---
     fig.add_trace(
         go.Scattergl(
             x=data_for_plot['Время'],
@@ -56,7 +55,7 @@ def show_timeseries_plot(
         )
     )
 
-    # === ДЕТЕКТОРЫ: маркеры + «стебли», связанные через legendgroup ===
+    # ДЕТЕКТОРЫ: маркеры + «стебли», связанные через legendgroup
     if detectors_results and isinstance(detectors_results, dict):
         results_dict = detectors_results.get("results", {})
         if isinstance(results_dict, dict) and len(results_dict) > 0:
@@ -128,7 +127,7 @@ def show_timeseries_plot(
                         mode="lines",
                         name=style["name"] + " (lines)",
                         legendgroup=group,
-                        opacity=0.2,
+                        opacity=0.05,
                         line=dict(width=1.2, color=style["color"]),
                         hoverinfo="skip",     # чтобы стебли не перехватывали ховер
                         showlegend=False,     # не дублировать пункт в легенде
