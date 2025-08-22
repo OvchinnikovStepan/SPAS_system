@@ -6,7 +6,7 @@ from datetime import datetime, date, time
 from dashboard.utils.validate_data import validate_dataframe_structure
 from dashboard.utils.validate_datetime_index import validate_datetime_index
 
-API_BASE = st.secrets['API_URL'].rstrip('/')
+API_BASE = st.secrets['API_DATA_URL'].rstrip('/')
 DATA_URL = f"{API_BASE}/data"
 
 @st.dialog("Параметры запроса данных", width="large")

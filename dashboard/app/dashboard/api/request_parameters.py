@@ -4,7 +4,7 @@ import requests
 import streamlit as st
 
 
-API_BASE = st.secrets['API_URL'].rstrip('/')
+API_BASE = st.secrets['API_DETECTORS_URL'].rstrip('/')
 DETECTORS_URL = f"{API_BASE}/detectors"
 
 class ParametersRequestError(Exception):

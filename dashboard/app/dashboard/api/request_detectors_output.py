@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 from .recording_parameters import get_detector_parameters_for_api
 
-API_BASE = st.secrets['API_URL'].rstrip('/')
+API_BASE = st.secrets['API_DETECTORS_URL'].rstrip('/')
 DETECTORS_URL = f"{API_BASE}/detectors"
 
 
