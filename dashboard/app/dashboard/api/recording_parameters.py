@@ -124,7 +124,6 @@ def display_detector_parameters():
     
     # Получаем параметры детекторов
     detector_params = get_detector_parameters()
-    print("DEBUG get_detector_parameters_for_api:", get_detector_parameters_for_api())
     
     if not detector_params:
         st.warning("Не удалось загрузить параметры детекторов")

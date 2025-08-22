@@ -34,21 +34,13 @@ def send_detectors_request(
     Возвращает:
       - JSON-ответ сервера как dict
     """
-    try:
-        models = get_detector_parameters_for_api()
-    except Exception as e:
-        print(e, "get_detector_parameters_for_api")
-    try:
-        series_payload = _series_to_payload_dict(df, value_column=value_column)
-    except Exception as e:
-        print(e, "_series_to_payload_dict")
-        
+    models = get_detector_parameters_for_api()
+    series_payload = _series_to_payload_dict(df, value_column=value_column)
 
     payload: Dict[str, Any] = {
         "models": models,
         "series": series_payload,
     }
-    print(payload)
     resp = requests.post(
         DETECTORS_URL,
         headers={
