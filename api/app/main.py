@@ -79,5 +79,6 @@ def health_check():
         "app_name": settings.app_name,
         "version": settings.app_version,
         "debug": settings.debug,
-        "port": settings.port
+        "port": settings.port,
+        "data": settings.data_dir
     }
