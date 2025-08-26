@@ -22,8 +22,8 @@ def validate_detector_imports():
 
         logger.info(f"📊 Найдено {len(DETECTORS)} детекторов:")
         for name in DETECTORS.keys():
-            logger.info(f"  • {name}: {DETECTORS[name]["path"]}")
-            logger.info(f"      Описание: {DETECTORS[name]["description"]}")
+            logger.info(f"  • {name}: {DETECTORS[name]['path']}")
+            logger.info(f"      Описание: {DETECTORS[name]['description']}")
 
         logger.info("✅ Конфигурация детекторов проверена успешно")
         return True
