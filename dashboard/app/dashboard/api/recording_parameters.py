@@ -76,7 +76,7 @@ def get_detector_parameters_for_api() -> Dict[str, Dict[str, Any]]:
             return int(float(value))
         except (TypeError, ValueError):
             return default
-    def _to_float(value: Any, default: float, round_to_1_dec: bool = False) -> float:
+    def _to_float(value: Any, default: float, precision: int = None) -> float:
         try:
             if isinstance(value, bool):
                 val = float(int(value))
@@ -84,7 +84,7 @@ def get_detector_parameters_for_api() -> Dict[str, Dict[str, Any]]:
                 val = default
             else:
                 val = float(value)
-            return round(val, 1) if round_to_1_dec else val
+            return round(val, precision) if precision is not None else val
         except (TypeError, ValueError):
             return default
     freezing = params.get("freezing", {})
@@ -93,19 +93,19 @@ def get_detector_parameters_for_api() -> Dict[str, Dict[str, Any]]:
     return {
         "freezing": {
             "freezing_count": _to_int(freezing.get("freezing_count"), default=5),
-            "rel_tol": _to_float(freezing.get("rel_tol"), default=1e-9, round_to_1_dec=False),
+            "rel_tol": _to_float(freezing.get("rel_tol"), default=1e-9, precision=None),
         },
         "avalanche": {
-            "hi_percent": _to_float(avalanche.get("hi_percent"), default=0.95, round_to_1_dec=True),
-            "low_percent": _to_float(avalanche.get("low_percent"), default=0.05, round_to_1_dec=True),
-            "bound_coef": _to_float(avalanche.get("bound_coef"), default=5.0, round_to_1_dec=True),
+            "hi_percent": _to_float(avalanche.get("hi_percent"), default=0.95, precision=2),
+            "low_percent": _to_float(avalanche.get("low_percent"), default=0.05, precision=2),
+            "bound_coef": _to_float(avalanche.get("bound_coef"), default=5.0, precision=1),
             "statistic_len": _to_int(avalanche.get("statistic_len"), default=30),
             "statistic_len_for_mean": _to_int(avalanche.get("statistic_len_for_mean"), default=5),
         },
         "outlier": {
-            "hi_percent": _to_float(outlier.get("hi_percent"), default=0.95, round_to_1_dec=True),
-            "low_percent": _to_float(outlier.get("low_percent"), default=0.05, round_to_1_dec=True),
-            "bound_coef": _to_float(outlier.get("bound_coef"), default=3.0, round_to_1_dec=True),
+            "hi_percent": _to_float(outlier.get("hi_percent"), default=0.95, precision=2),
+            "low_percent": _to_float(outlier.get("low_percent"), default=0.05, precision=2),
+            "bound_coef": _to_float(outlier.get("bound_coef"), default=3.0, precision=1),
             "statistic_len": _to_int(outlier.get("statistic_len"), default=144),
             "statistic_len_for_mean": _to_int(outlier.get("statistic_len_for_mean"), default=12),
         },
@@ -124,13 +124,13 @@ def _render_freezing_popover(params: Dict[str, Any]) -> None:
         col1, col2 = st.columns(2)
         with col1:
             freezing_count = st.number_input(
-                "freezing_count (int)",
+                "Количество замерзаний (целое)",
                 value=int(params.get("freezing_count", 5)),
                 min_value=0, step=1, key="freezing_freezing_count"
             )
         with col2:
             rel_tol = st.number_input(
-                "rel_tol (float)",
+                "Относительная погрешность (число)",
                 value=float(params.get("rel_tol", 1e-9)),
                 min_value=0.0, step=1e-9, format="%.9f", key="freezing_rel_tol"
             )
@@ -148,42 +148,42 @@ def _render_avalanche_popover(params: Dict[str, Any]) -> None:
         col1, col2 = st.columns(2)
         with col1:
             hi_percent = st.number_input(
-                "hi_percent (0..1, шаг 0.1)",
+                "Верхний процентиль (0..1, шаг 0.01)",
                 value=float(params.get("hi_percent", 0.95)),
                 min_value=0.0, max_value=1.0,
-                step=0.1, format="%.1f",
+                step=0.01, format="%.2f",
                 key="avalanche_hi_percent"
             )
             statistic_len = st.number_input(
-                "statistic_len (int)",
+                "Длина статистики (целое)",
                 value=int(params.get("statistic_len", 30)),
                 min_value=1, step=1,
                 key="avalanche_stat_len"
             )
         with col2:
             low_percent = st.number_input(
-                "low_percent (0..1, шаг 0.1)",
+                "Нижний процентиль (0..1, шаг 0.01)",
                 value=float(params.get("low_percent", 0.05)),
                 min_value=0.0, max_value=1.0,
-                step=0.1, format="%.1f",
+                step=0.01, format="%.2f",
                 key="avalanche_low_percent"
             )
             statistic_len_for_mean = st.number_input(
-                "statistic_len_for_mean (int)",
+                "Длина окна для среднего (целое)",
                 value=int(params.get("statistic_len_for_mean", 5)),
                 min_value=1, step=1,
                 key="avalanche_stat_len_mean"
             )
         bound_coef = st.number_input(
-            "bound_coef (шаг 0.1)",
+            "Коэффициент границы (шаг 0.1)",
             value=float(params.get("bound_coef", 5.0)),
             min_value=0.0, step=0.1, format="%.1f",
             key="avalanche_bound_coef"
         )
         if st.button("💾 Сохранить", use_container_width=True, key="save_avalanche"):
             _save_overrides("avalanche", {
-                "hi_percent": round(float(hi_percent), 1),
-                "low_percent": round(float(low_percent), 1),
+                "hi_percent": round(float(hi_percent), 2),
+                "low_percent": round(float(low_percent), 2),
                 "bound_coef": round(float(bound_coef), 1),
                 "statistic_len": int(statistic_len),
                 "statistic_len_for_mean": int(statistic_len_for_mean),
@@ -197,42 +197,42 @@ def _render_outlier_popover(params: Dict[str, Any]) -> None:
         col1, col2 = st.columns(2)
         with col1:
             hi_percent = st.number_input(
-                "hi_percent (0..1, шаг 0.1)",
+                "Верхний процентиль (0..1, шаг 0.01)",
                 value=float(params.get("hi_percent", 0.95)),
                 min_value=0.0, max_value=1.0,
-                step=0.1, format="%.1f",
+                step=0.01, format="%.2f",
                 key="outlier_hi_percent"
             )
             statistic_len = st.number_input(
-                "statistic_len (int)",
+                "Длина статистики (целое)",
                 value=int(params.get("statistic_len", 144)),
                 min_value=1, step=1,
                 key="outlier_stat_len"
             )
         with col2:
             low_percent = st.number_input(
-                "low_percent (0..1, шаг 0.1)",
+                "Нижний процентиль (0..1, шаг 0.01)",
                 value=float(params.get("low_percent", 0.05)),
                 min_value=0.0, max_value=1.0,
-                step=0.1, format="%.1f",
+                step=0.01, format="%.2f",
                 key="outlier_low_percent"
             )
             statistic_len_for_mean = st.number_input(
-                "statistic_len_for_mean (int)",
+                "Длина окна для среднего (целое)",
                 value=int(params.get("statistic_len_for_mean", 12)),
                 min_value=1, step=1,
                 key="outlier_stat_len_mean"
             )
         bound_coef = st.number_input(
-            "bound_coef (шаг 0.1)",
+            "Коэффициент границы (шаг 0.1)",
             value=float(params.get("bound_coef", 3.0)),
             min_value=0.0, step=0.1, format="%.1f",
             key="outlier_bound_coef"
         )
         if st.button("💾 Сохранить", use_container_width=True, key="save_outlier"):
             _save_overrides("outlier", {
-                "hi_percent": round(float(hi_percent), 1),
-                "low_percent": round(float(low_percent), 1),
+                "hi_percent": round(float(hi_percent), 2),
+                "low_percent": round(float(low_percent), 2),
                 "bound_coef": round(float(bound_coef), 1),
                 "statistic_len": int(statistic_len),
                 "statistic_len_for_mean": int(statistic_len_for_mean),
@@ -275,7 +275,7 @@ def display_detector_parameters():
             st.warning("Параметр bound_coef не найден")
         _render_avalanche_popover(params)
     with col3:
-        st.subheader("Детектор аномалий")
+        st.subheader("Детектор выбросов")
         params = detector_params.get("outlier", {})
         if "bound_coef" in params:
             try:
