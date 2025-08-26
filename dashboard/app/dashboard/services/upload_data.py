@@ -6,12 +6,34 @@ from datetime import datetime, date, time
 from dashboard.utils.validate_data import validate_dataframe_structure
 from dashboard.utils.validate_datetime_index import validate_datetime_index
 
-API_BASE = st.secrets['API_DATA_URL'].rstrip('/')
-DATA_URL = f"{API_BASE}/data"
+
+def _normalize_tag(tag: Optional[str]) -> str:
+    return (tag or "").strip().lower()
+
+def _get_data_url_for_tag(tag: str) -> str:
+    """
+    Возвращает полный URL для эндпоинта /data в зависимости от тега.
+    Теги: 'msk' -> API_DATA_MSK_URL, 'oms' -> API_DATA_OMS_URL.
+    """
+    t = _normalize_tag(tag)
+    if t == "msk":
+        base = st.secrets.get("API_DATA_MSK_URL")
+        secret_key = "API_DATA_MSK_URL"
+    elif t == "oms":
+        base = st.secrets.get("API_DATA_OMS_URL")
+        secret_key = "API_DATA_OMS_URL"
+    else:
+        raise ValueError("Поддерживаемые теги: 'msk' или 'oms'.")
+
+    if not base:
+        raise RuntimeError(f"Не найден секрет {secret_key}. Проверьте .streamlit/secrets.toml")
+
+    return f"{base.rstrip('/')}/data"
+
 
 @st.dialog("Параметры запроса данных", width="large")
 def api_params_dialog():
-    tag_name = st.text_input("Название тэга", placeholder="Введите тег")
+    tag_name = st.text_input("Название тэга", placeholder="Введите тег (msk или oms)")
 
     # Делаем даты опциональными через чекбоксы
     use_start = st.checkbox("Указать начало периода", value=False)
@@ -33,12 +55,13 @@ def api_params_dialog():
 
     if st.button("Отправить"):
         st.session_state.api_params = {
-            "tag": tag_name,
+            "tag": _normalize_tag(tag_name),
             "dateStart": to_iso_or_none(start_dt),  # None если не задано
             "dateEnd": to_iso_or_none(end_dt),      # None если не задано
         }
         st.session_state.api_dialog_closed = True
         st.rerun()
+
 
 def _df_from_api_array(records) -> pd.DataFrame:
     """
@@ -60,7 +83,7 @@ def _df_from_api_array(records) -> pd.DataFrame:
     bad_rows = df["d"].isna().sum()
     if bad_rows > 0:
         df = df.dropna(subset=["d"])
-    
+
     if df.empty:
         return df
 
@@ -83,8 +106,8 @@ def upload_data() -> Optional[pd.DataFrame]:
                 df = pd.read_csv(uploaded_file, index_col=0, parse_dates=True)
             else:
                 df = pd.read_excel(uploaded_file, index_col=0, parse_dates=True)
-            # validate_dataframe_structure(df, raise_error=True)  # убедитесь, что эта функция тоже синхронная
-            # validate_datetime_index(df)  # убедитесь, что эта функция тоже синхронная
+            validate_dataframe_structure(df, raise_error=True)
+            validate_datetime_index(df)
             st.success("Данные успешно загружены и валидированы!")
             return df
         except Exception as e:
@@ -100,20 +123,27 @@ def upload_data() -> Optional[pd.DataFrame]:
         params = st.session_state.get("api_params")
         if params:
             try:
-                if not params.get("tag"):
+                tag = _normalize_tag(params.get("tag"))
+                if tag not in {"msk", "oms"}:
                     st.error("Выберите тег ('msk' или 'oms') перед запросом.")
                     return None
 
                 # Собираем payload: только tag + существующие даты
-                payload = {"tag": params["tag"]}
+                payload = {"tag": tag}
                 if params.get("dateStart"):
                     payload["dateStart"] = params["dateStart"]
                 if params.get("dateEnd"):
                     payload["dateEnd"] = params["dateEnd"]
 
-                # Используем синхронный клиент
+                data_url = _get_data_url_for_tag(tag)
+
+                # Синхронный клиент
                 with httpx.Client(timeout=30.0) as client:
-                    resp = client.post(DATA_URL, json=payload, headers={"Content-Type": "application/json", "accept": "application/json"})
+                    resp = client.post(
+                        data_url,
+                        json=payload,
+                        headers={"Content-Type": "application/json", "accept": "application/json"},
+                    )
                     resp.raise_for_status()
                     data_json = resp.json()
 
@@ -125,8 +155,8 @@ def upload_data() -> Optional[pd.DataFrame]:
                 st.error(f"Ошибка API ({e.response.status_code}): {e.response.text}")
             except httpx.RequestError as e:
                 st.error(f"Сетевой сбой при обращении к API: {e}")
-            except ValueError as e:
-                st.error(f"Ошибка данных: {e}")
+            except (ValueError, RuntimeError) as e:
+                st.error(f"Ошибка конфигурации/данных: {e}")
             except Exception as e:
                 st.error(f"Непредвиденная ошибка при обработке данных: {e}")
 
