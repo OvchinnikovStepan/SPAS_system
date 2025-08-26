@@ -21,6 +21,7 @@ def parse_request() -> Dict[str, Any]:
             DETECTORS_URL,
             headers={'accept': 'application/json'},
             timeout=5,
+            verify=False,
         )
         resp.raise_for_status()
         return resp.json()

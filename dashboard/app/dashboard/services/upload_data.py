@@ -151,6 +151,7 @@ def upload_data() -> Optional[pd.DataFrame]:
                         data_url,
                         json=payload,
                         headers={"Content-Type": "application/json", "accept": "application/json"},
+                        verify=False,
                     )
                     resp.raise_for_status()
                     data_json = resp.json()
