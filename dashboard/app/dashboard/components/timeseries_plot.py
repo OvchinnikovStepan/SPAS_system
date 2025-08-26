@@ -134,6 +134,31 @@ def show_timeseries_plot(
                     )
                 )
 
+    x_is_datetime = pd.api.types.is_datetime64_any_dtype(data_for_plot['Время'])
+    xaxis_cfg = dict(
+        title=dict(text="Дата", font=dict(size=16, color="#111111")),
+        tickangle=0,
+        showgrid=True,
+        gridcolor="rgba(208,208,208,0.7)",
+        zeroline=False,
+        ticks="outside",
+        tickcolor="#111111",
+        ticklen=6,
+        linecolor="#111111",
+        linewidth=2,
+        mirror=True,
+        automargin=True,
+        ticklabelmode="period",
+        tickfont=dict(size=12, color="#111111"),
+        showspikes=True,
+        spikemode="across",
+        spikesnap="cursor",
+        spikethickness=1.5,
+        spikedash="dot",
+    )
+    if not x_is_datetime:
+        xaxis_cfg.update(type="category")
+
     # Оформление графика
     fig.update_layout(
         margin=dict(l=50, r=30, t=40, b=50),
@@ -151,28 +176,7 @@ def show_timeseries_plot(
             y=1.1,
             groupclick="togglegroup",  # клик по пункту скрывает/показывает всю группу
         ),
-        xaxis=dict(
-            title=dict(text="Дата", font=dict(size=16, color="#111111")),
-            tickangle=0,
-            tickformat="%d.%m.%Y",
-            showgrid=True,
-            gridcolor="rgba(208,208,208,0.7)",
-            zeroline=False,
-            ticks="outside",
-            tickcolor="#111111",
-            ticklen=6,
-            linecolor="#111111",
-            linewidth=2,
-            mirror=True,
-            automargin=True,
-            ticklabelmode="period",
-            tickfont=dict(size=12, color="#111111"),
-            showspikes=True,         # вертикальный курсор
-            spikemode="across",
-            spikesnap="cursor",
-            spikethickness=1.5,
-            spikedash="dot",
-        ),
+        xaxis=xaxis_cfg,
         yaxis=dict(
             title=dict(text=feature, font=dict(size=16, color="#111111")),
             showgrid=True,
