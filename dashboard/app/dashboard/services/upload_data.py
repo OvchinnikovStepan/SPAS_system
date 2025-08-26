@@ -7,23 +7,27 @@ from dashboard.utils.validate_data import validate_dataframe_structure
 from dashboard.utils.validate_datetime_index import validate_datetime_index
 
 
-def _normalize_tag(tag: Optional[str]) -> str:
-    return (tag or "").strip().lower()
+def _normalize_source(source: Optional[str]) -> str:
+    return (source or "").strip().lower()
 
-def _get_data_url_for_tag(tag: str) -> str:
+def _clean_measurement_tag(tag: Optional[str]) -> str:
+    # Тег измерения чувствителен к регистру, поэтому только обрезаем пробелы
+    return (tag or "").strip()
+
+def _get_data_url_for_source(source: str) -> str:
     """
-    Возвращает полный URL для эндпоинта /data в зависимости от тега.
-    Теги: 'msk' -> API_DATA_MSK_URL, 'oms' -> API_DATA_OMS_URL.
+    Возвращает полный URL для эндпоинта /data в зависимости от выбранного источника.
+    Источники: 'msk' -> API_DATA_MSK_URL, 'oms' -> API_DATA_OMS_URL.
     """
-    t = _normalize_tag(tag)
-    if t == "msk":
+    s = _normalize_source(source)
+    if s == "msk":
         base = st.secrets.get("API_DATA_MSK_URL")
         secret_key = "API_DATA_MSK_URL"
-    elif t == "oms":
+    elif s == "oms":
         base = st.secrets.get("API_DATA_OMS_URL")
         secret_key = "API_DATA_OMS_URL"
     else:
-        raise ValueError("Поддерживаемые теги: 'msk' или 'oms'.")
+        raise ValueError("Поддерживаемые источники: 'msk' или 'oms'.")
 
     if not base:
         raise RuntimeError(f"Не найден секрет {secret_key}. Проверьте .streamlit/secrets.toml")
@@ -33,9 +37,9 @@ def _get_data_url_for_tag(tag: str) -> str:
 
 @st.dialog("Параметры запроса данных", width="large")
 def api_params_dialog():
-    tag_name = st.text_input("Название тэга", placeholder="Введите тег (msk или oms)")
+    source = st.selectbox("Источник данных", options=["msk", "oms"], index=0, key="api_source_select")
+    tag_name = st.text_input("Название тэга")
 
-    # Делаем даты опциональными через чекбоксы
     use_start = st.checkbox("Указать начало периода", value=False)
     start_date = st.date_input("Начало периода — дата", value=date.today(), disabled=not use_start)
     start_time = st.time_input("Начало периода — время", value=time(0, 0, 0), disabled=not use_start, key="start_time")
@@ -55,9 +59,10 @@ def api_params_dialog():
 
     if st.button("Отправить"):
         st.session_state.api_params = {
-            "tag": _normalize_tag(tag_name),
-            "dateStart": to_iso_or_none(start_dt),  # None если не задано
-            "dateEnd": to_iso_or_none(end_dt),      # None если не задано
+            "source": _normalize_source(source),
+            "measurement_tag": _clean_measurement_tag(tag_name),
+            "dateStart": to_iso_or_none(start_dt),
+            "dateEnd": to_iso_or_none(end_dt),
         }
         st.session_state.api_dialog_closed = True
         st.rerun()
@@ -123,21 +128,24 @@ def upload_data() -> Optional[pd.DataFrame]:
         params = st.session_state.get("api_params")
         if params:
             try:
-                tag = _normalize_tag(params.get("tag"))
-                if tag not in {"msk", "oms"}:
-                    st.error("Выберите тег ('msk' или 'oms') перед запросом.")
+                source = _normalize_source(params.get("source"))
+                if source not in {"msk", "oms"}:
+                    st.error("Выберите источник ('msk' или 'oms') перед запросом.")
                     return None
 
-                # Собираем payload: только tag + существующие даты
-                payload = {"tag": tag}
+                measurement_tag = _clean_measurement_tag(params.get("measurement_tag"))
+                if not measurement_tag:
+                    st.error("Укажите тэг измерения.")
+                    return None
+
+                payload = {"tag": measurement_tag}
                 if params.get("dateStart"):
                     payload["dateStart"] = params["dateStart"]
                 if params.get("dateEnd"):
                     payload["dateEnd"] = params["dateEnd"]
 
-                data_url = _get_data_url_for_tag(tag)
+                data_url = _get_data_url_for_source(source)
 
-                # Синхронный клиент
                 with httpx.Client(timeout=30.0) as client:
                     resp = client.post(
                         data_url,
