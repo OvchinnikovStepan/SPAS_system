@@ -6,8 +6,7 @@ COPY api/requirements_api.txt .
 RUN pip install --no-cache-dir -r requirements_api.txt
 
 COPY  api/app ./api/app
-COPY  api/.env /
 
-EXPOSE 8000
+EXPOSE $PORT
 
-CMD ["uvicorn", "api.app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--reload"]
+CMD sh -c "uvicorn api.app.main:app --host 0.0.0.0 --port $PORT --reload"

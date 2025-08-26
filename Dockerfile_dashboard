@@ -7,6 +7,16 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY  dashboard/app ./dashboard
 
-EXPOSE 8501
+RUN mkdir -p ./dashboard/.streamlit
 
-CMD ["streamlit", "run", "dashboard/main.py"]
+EXPOSE $PORT
+
+# Создаем config.toml
+RUN echo "[server]\n\
+port = ${PORT:-8501}\n\
+fileWatcherType = \"poll\"" > ./dashboard/.streamlit/config.toml
+
+RUN echo "API_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
+
+CMD sh -c "streamlit run dashboard/main.py --server.port $PORT --server.address 0.0.0.0"
+
