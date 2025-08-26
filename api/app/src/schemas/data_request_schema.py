@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional, Annotated
-from app.src.schemas.isodate_query import ISODateTime
+from typing import Optional
+from api.app.src.schemas.isodate_query import ISODateTime
 
 
 class SDataRequest(BaseModel):

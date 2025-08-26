@@ -1,5 +1,3 @@
-import os
-import importlib
 import logging
 
 logger = logging.getLogger(__name__)
@@ -8,7 +6,7 @@ logger = logging.getLogger(__name__)
 def validate_detector_imports():
     try:
         # Попытка импорта
-        from app.config import DETECTORS
+        from api.app.config import DETECTORS
 
         # Проверка типов
         if not isinstance(DETECTORS, dict):

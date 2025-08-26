@@ -1,11 +1,10 @@
 from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
-import pandas as pd
+from typing import List
 import logging
-from app.src.schemas.data_file_schema import SFileInfo
-from app.src.schemas.data_request_schema import SDataRequest
-from app.src.schemas.data_point_schema import SDataPoint
-from app.src.services.data_service.data_service import get_available_files, get_data_slice
+from api.app.src.schemas.data_file_schema import SFileInfo
+from api.app.src.schemas.data_request_schema import SDataRequest
+from api.app.src.schemas.data_point_schema import SDataPoint
+from api.app.src.services.data_service.data_service import get_available_files, get_data_slice
 
 logger = logging.getLogger(__name__)
 

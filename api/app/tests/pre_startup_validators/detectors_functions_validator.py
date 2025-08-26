@@ -1,4 +1,3 @@
-import os
 import importlib
 import logging
 
@@ -7,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 def validate_detector_functions():
     """Проверка наличия необходимых функций в модулях детекторов"""
-    from app.config import DETECTORS
+    from api.app.config import DETECTORS
 
     required_function = "detector"  # или другое имя функции
 

@@ -1,13 +1,12 @@
 from fastapi import FastAPI
 import logging
 import coloredlogs
-import uvicorn
 from contextlib import asynccontextmanager
-from app.src.middleware import add_middlewares
-from app.settings import settings
-from app.src.api.detectors_router import router as detectors_router
-from app.src.api.data_router import router as data_router
-from app.tests.pre_startup_validators.run_all_pre_startup_validators import run_pre_startup_validations
+from api.app.src.middleware import add_middlewares
+from api.app.settings import settings
+from api.app.src.api.detectors_router import router as detectors_router
+from api.app.src.api.data_router import router as data_router
+from api.app.tests.pre_startup_validators.run_all_pre_startup_validators import run_pre_startup_validations
 
 coloredlogs.install(
     level='INFO',

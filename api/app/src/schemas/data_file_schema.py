@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
-from app.src.schemas.isodate_query import ISODateTime
+from api.app.src.schemas.isodate_query import ISODateTime
 
 
 class SFileInfo(BaseModel):

@@ -1,4 +1,3 @@
-import os
 import importlib
 import logging
 
@@ -16,7 +15,7 @@ def validate_basic_functionality():
         index=pd.date_range(start="2023-01-01", periods=100, freq="1h")
     )
 
-    from app.config import DETECTORS
+    from api.app.config import DETECTORS
 
     for detector_name in DETECTORS.keys():
         module_path = DETECTORS[detector_name]["path"]
