@@ -32,3 +32,4 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - PORT=${DASHBOARD_PORT:-8501}
+

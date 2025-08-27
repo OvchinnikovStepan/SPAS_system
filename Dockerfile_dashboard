@@ -7,18 +7,18 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY  dashboard/app ./dashboard
 
-RUN mkdir -p ./dashboard/.streamlit
+#RUN mkdir -p ./dashboard/app/.streamlit
 
 EXPOSE $PORT
 
 # Создаем config.toml
-RUN echo "[server]\n\
-  port = ${PORT:-8501}\n\
-  fileWatcherType = \"poll\"" > ./dashboard/.streamlit/config.toml
-
-RUN echo "API_DATA_OMS_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
-RUN echo "API_DATA_MSK_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
-RUN echo "API_DETECTORS_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
+#RUN echo "[server]\n\
+#  port = ${PORT:-8501}\n\
+#  fileWatcherType = \"poll\"" > ./dashboard/.streamlit/config.toml
+#
+#RUN echo "API_DATA_OMS_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
+#RUN echo "API_DATA_MSK_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
+#RUN echo "API_DETECTORS_URL = \"http://spas_system_api:8000/api\"" > ./dashboard/.streamlit/secrets.toml
 
 CMD sh -c "streamlit run dashboard/main.py --server.port $PORT --server.address 0.0.0.0"
 
