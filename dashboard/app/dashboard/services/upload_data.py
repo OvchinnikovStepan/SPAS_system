@@ -147,9 +147,9 @@ def upload_data() -> Optional[pd.DataFrame]:
                 data_url = _get_data_url_for_source(source)
 
                 with httpx.Client(timeout=30.0, verify=False) as client:
-                    resp = client.post(
+                    resp = client.get(
                         data_url,
-                        json=payload,
+                        params=payload,
                         headers={"Content-Type": "application/json", "accept": "application/json"},
                     )
                     resp.raise_for_status()
